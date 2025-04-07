@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HR Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 14px 16px;
+    }
+
+    th {
+      background-color: #eee;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f3f3f3;
+    }
+
+    .open-btn, .sift-btn {
+      background-color: black;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .open-btn:hover, .sift-btn:hover {
+      background-color: #333;
+    }
+
+    .sift-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>HR Dashboard - Applicant Overview</h2>
+    <table id="applicantsTable" data-sort-dir="asc">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)">User ID</th>
+          <th onclick="sortTable(1)">Name</th>
+          <th onclick="sortTable(2)">Email</th>
+          <th onclick="sortTable(3)">Quiz Score</th>
+          <th>Resume</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Filled dynamically -->
+      </tbody>
+    </table>
+    <div class="sift-container">
+      <button class="sift-btn" onclick="window.location.href='/adminwork'">Sift Resumes</button>
+    </div>
+  </div>
+
+  <script>
+    fetch('http://127.0.0.1:5001/applicants')
+      .then(response => response.json())
+      .then(data => {
+        const tableBody = document.querySelector('#applicantsTable tbody');
+        tableBody.innerHTML = '';
+
+        data.forEach(applicant => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${applicant.id || 'N/A'}</td>
+            <td>${applicant.name}</td>
+            <td>${applicant.email}</td>
+            <td>${applicant.quiz_scores !== undefined && applicant.quiz_scores !== null ? applicant.quiz_scores : 'Not Attempted'}</td>
+            <td><a href="/open_resume/${applicant.id}" target="_blank"><button class="open-btn">Open PDF</button></a></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching applicants:', error);
+      });
+
+    function sortTable(columnIndex) {
+      const table = document.getElementById("applicantsTable");
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.rows);
+      const isNumeric = columnIndex === 0 || columnIndex === 3;
+      const ascending = table.getAttribute("data-sort-dir") !== "asc";
+      table.setAttribute("data-sort-dir", ascending ? "asc" : "desc");
+
+      rows.sort((a, b) => {
+        const valA = a.cells[columnIndex].textContent.trim();
+        const valB = b.cells[columnIndex].textContent.trim();
+
+        if (isNumeric) {
+          const numA = parseFloat(valA) || 0;
+          const numB = parseFloat(valB) || 0;
+          return ascending ? numA - numB : numB - numA;
+        } else {
+          return ascending
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    }
+  </script>
+</body>
+</html>

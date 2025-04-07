@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - SkillSift</title>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 400px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 10px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-field {
+            width: 280px;
+            padding: 12px;
+            border: 2px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+            text-align: center;
+            background-color: #fff6f6;
+            outline: none;
+        }
+
+        .button {
+            width: 150px;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background-color: black;
+            color: white;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .success-message {
+            color: green;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{ url_for('static', filename='image.png') }}" alt="SkillSift Logo" class="logo">
+        <h1>Sign up</h1>
+        <form id="signupForm">
+            <input type="text" id="fullname" class="input-field" placeholder="Full Name" required>
+            <input type="email" id="email" class="input-field" placeholder="Email Address" required>
+            <input type="text" id="username" class="input-field" placeholder="Username" required>
+            <input type="password" id="password" class="input-field" placeholder="Password" required>
+            <input type="password" id="confirmPassword" class="input-field" placeholder="Confirm Password" required>
+            <button type="submit" class="button">Sign up</button>
+            <p id="message" class="error-message"></p>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("signupForm").addEventListener("submit", async function(event) {
+            event.preventDefault(); // Prevent form from refreshing the page
+
+            const fullname = document.getElementById("fullname").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const confirmPassword = document.getElementById("confirmPassword").value;
+            const messageElement = document.getElementById("message");
+
+            if (password !== confirmPassword) {
+                messageElement.textContent = "❌ Passwords do not match!";
+                return;
+            }
+
+            const response = await fetch("http://127.0.0.1:5001/candidate_signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    fullname, 
+                    email, 
+                    username, 
+                    password, 
+                    confirm_password: confirmPassword 
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                messageElement.textContent = "✅ Signup successful! Redirecting...";
+                messageElement.className = "success-message";
+                setTimeout(() => {
+                    window.location.href = "/userlogin";
+                }, 2000);
+            } else {
+                messageElement.textContent = result.message;
+                messageElement.className = "error-message";
+            }
+        });
+    </script>
+</body>
+</html>

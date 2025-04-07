@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Java Quiz</title>
+</head>
+<body>
+    <h1>Welcome to the Java Quiz</h1>
+    <button onclick="generateQuiz()">Generate Quiz</button>
+    <pre id="quiz"></pre>
+    
+    <input type="text" id="answers" placeholder="Enter answers like 1-a, 2-b, ..." />
+    <button onclick="submitAnswers()">Submit Answers</button>
+    <h2 id="score"></h2>
+
+    <script>
+        async function generateQuiz() {
+            let response = await fetch("/generate_quiz", { method: "GET" });
+            let data = await response.json();
+            document.getElementById("quiz").innerText = data.quiz || "Error generating quiz.";
+        }
+
+        async function submitAnswers() {
+            let answers = document.getElementById("answers").value;
+            let response = await fetch("/submit_answers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ answers: answers })
+            });
+            let data = await response.json();
+            document.getElementById("score").innerText = data.score || "Error evaluating score.";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resume Quiz - SkillSift</title>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Urbanist', sans-serif;
+            background-color: #f4f4f4;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .user-banner {
+            width: 100%;
+            background-color: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 16px;
+            color: #333;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-field, .file-field, .textarea-field {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], input[type="file"], textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+        }
+
+        .btn {
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background-color: #333;
+        }
+
+        #questions, #score {
+            margin-top: 30px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ✅ User Info Banner -->
+    <div class="user-banner" id="userBanner">
+        <p><strong>Logged in as:</strong> <span id="bannerName"></span> | <strong>ID:</strong> <span id="bannerId"></span></p>
+    </div>
+
+    <h2>Skill-Based Resume Quiz</h2>
+
+    <div class="input-field">
+        <label>User ID</label>
+        <input type="text" id="user_id" placeholder="Enter your ID" readonly>
+    </div>
+
+    <div class="input-field">
+        <label>Name</label>
+        <input type="text" id="name" placeholder="Enter your name" readonly>
+    </div>
+
+    <div class="file-field">
+        <label>Upload Resume (PDF only)</label>
+        <input type="file" id="resume" accept="application/pdf">
+    </div>
+
+    <button class="btn" onclick="uploadAndGenerateQuiz()">Upload and Generate Quiz</button>
+
+    <div id="questions"></div>
+
+    <div class="textarea-field" style="display: none;" id="answerSection">
+        <label>Enter Your Answers (e.g., A B C D A B C D A B)</label>
+        <textarea id="answers" rows="3" placeholder="Your answers here..."></textarea>
+        <button class="btn" onclick="submitAnswers()">Submit Answers</button>
+    </div>
+
+    <div id="score"></div>
+</div>
+
+<!-- ✅ JS Script to Handle User Info -->
+<script>
+    // Store data passed from Flask into sessionStorage
+    sessionStorage.setItem("applicant_id", "{{ applicant_id }}");
+    sessionStorage.setItem("applicant_name", "{{ applicant_name }}");
+
+    // Retrieve from sessionStorage
+    let userId = sessionStorage.getItem("applicant_id");
+    let userName = sessionStorage.getItem("applicant_name");
+
+    window.onload = () => {
+        if (userId && userName) {
+            document.getElementById("bannerId").textContent = userId;
+            document.getElementById("bannerName").textContent = userName;
+
+            document.getElementById("user_id").value = userId;
+            document.getElementById("name").value = userName;
+        }
+    };
+
+    function uploadAndGenerateQuiz() {
+        const fileInput = document.getElementById("resume");
+        userId = document.getElementById("user_id").value.trim();
+        userName = document.getElementById("name").value.trim();
+        const file = fileInput.files[0];
+
+        if (!userId || !userName || !file) {
+            alert("Please fill all fields and upload your resume.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("name", userName);
+        formData.append("resume", file);
+
+        fetch("/generate_quiz", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            const questionDiv = document.getElementById("questions");
+            questionDiv.innerHTML = "<h3>Quiz Questions</h3><pre>" + data.questions + "</pre>";
+
+            document.getElementById("answerSection").style.display = "block";
+            document.getElementById("score").innerHTML = "";
+        })
+        .catch(() => alert("Something went wrong. Try again."));
+    }
+
+    function submitAnswers() {
+        const answers = document.getElementById("answers").value.trim();
+        if (!answers || answers.split(" ").length !== 10) {
+            alert("Please enter 10 answers separated by spaces (A B C D...).");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("name", userName);
+        formData.append("answers", answers);
+
+        fetch("/submit_answers", {
+            method: "POST",
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("score").innerHTML = `<h3>Your Score: ${data.score}/10</h3>`;
+        })
+        .catch(() => alert("Failed to submit answers. Try again."));
+    }
+</script>
+
+</body>
+</html>
+
