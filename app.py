@@ -13,7 +13,7 @@ import re
 import google.generativeai as genai
 
 # Gemini API key setup
-genai.configure(api_key="AIzaSyCfFhfqFomEefjAzeq0wF-ldBFC5xw49GY")
+genai.configure(api_key="")
 model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 app = Flask(__name__)
